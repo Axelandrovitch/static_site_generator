@@ -1,6 +1,7 @@
 import unittest
 
 from htmlnode import HTMLNode, LeafNode, ParentNode
+from textnode import TextNode
 
 class TestHTMLNode(unittest.TestCase):
 
@@ -61,6 +62,29 @@ class TestHTMLNode(unittest.TestCase):
      node = ParentNode(tag="p",children=[LeafNode(tag="b", value="Bold text"), 3])
      node.to_html()
     self.assertEqual(str(context.exception), "The children must be of type LeafNode or ParentNode")
+
+# Test conversion from TextNode to HTMLNode
+  def test_node_to_html_node(self):
+    text_node_text = TextNode(text="Hello World")
+    text_node_bold= TextNode(text="bold text", text_type="bold")
+    text_node_italic = TextNode(text="italic text", text_type="italic")
+    text_node_code = TextNode(text="code text", text_type="code")
+    text_node_link = TextNode(text="anchor text", text_type="link", url="https://www.boot.dev")
+    text_node_image = TextNode(text="some image", text_type="image", url="img_src")
+    empty_html_node = HTMLNode()
+    expected_result_text = LeafNode(tag=None, value="Hello World")
+    expected_result_bold = LeafNode(tag="b", value="bold text")
+    expected_result_italic = LeafNode(tag="i", value="italic text")
+    expected_result_code = LeafNode(tag="code", value="code text")
+    expected_result_link = LeafNode(tag="a", value="anchor text", props={"href": "https://www.boot.dev"})
+    expected_result_image = LeafNode(tag="img", value="", props={"src": "img_src", "alt": "some image"})
+    
+    self.assertEqual(empty_html_node.text_node_to_html_node(text_node_text), expected_result_text)
+    self.assertEqual(empty_html_node.text_node_to_html_node(text_node_bold), expected_result_bold)
+    self.assertEqual(empty_html_node.text_node_to_html_node(text_node_italic), expected_result_italic)
+    self.assertEqual(empty_html_node.text_node_to_html_node(text_node_code), expected_result_code)
+    self.assertEqual(empty_html_node.text_node_to_html_node(text_node_link), expected_result_link)
+    self.assertEqual(empty_html_node.text_node_to_html_node(text_node_image), expected_result_image)
 
 
 if __name__ == "__main__":

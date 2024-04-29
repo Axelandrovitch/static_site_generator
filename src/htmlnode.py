@@ -28,12 +28,34 @@ class HTMLNode:
       return ""
     children_reprs = [repr(child) for child in self.children] if self.children else "no children"
     return f"tag = {self.tag}, value = {self.value},{check_props(props_str)} children = {children_reprs}"
+  
+  def text_node_to_html_node(self, text_node):
+    text = text_node.text
+    url = text_node.url
+    match text_node.text_type:
+      case "text":
+        return LeafNode(tag=None, value=text)
+      case "bold":
+        return LeafNode(tag="b", value=text)
+      case "italic":
+        return LeafNode(tag="i", value=text)
+      case "code":
+        return LeafNode(tag="code", value=text)
+      case "link":
+        return LeafNode(tag="a", value=text, props={"href": url})
+      case "image":
+        return LeafNode(tag="img", value="", props={"src": url, "alt": text})
 
 
 
 class LeafNode(HTMLNode):
   def __init__(self, tag, value, props = None):
     super().__init__(tag, value, None, props)
+
+  def __eq__(self, other):
+    if not isinstance(other, LeafNode):
+      return NotImplemented
+    return (self.tag == other.tag and self.value == other.value and self.props == other.props)
   
   def to_html(self):
     if self.value is None or self.value =="":
@@ -48,6 +70,7 @@ class LeafNode(HTMLNode):
 class ParentNode(HTMLNode):
   def __init__(self, tag, children, props = None):
     super().__init__(tag, None, children, props)
+  
 
   def to_html(self):
     if self.tag is None or self.tag == "":
