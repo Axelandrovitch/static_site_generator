@@ -9,10 +9,13 @@ class HTMLNode:
     raise NotImplementedError
   
   def props_to_html(self):
-    props_to_concatenate = []
-    for key, value in self.props.items():
-      props_to_concatenate.append(f'{key}="{value}"')
-    return " ".join(props_to_concatenate)
+    if self.props is None:
+      return ""
+    else:
+      props_to_concatenate = []
+      for key, value in self.props.items():
+        props_to_concatenate.append(f'{key}="{value}"')
+      return " ".join(props_to_concatenate)
 
 
   def __repr__(self):
@@ -25,3 +28,18 @@ class HTMLNode:
       return ""
     children_reprs = [repr(child) for child in self.children] if self.children else "no children"
     return f"tag = {self.tag}, value = {self.value},{check_props(props_str)} children = {children_reprs}"
+
+
+
+class LeafNode(HTMLNode):
+  def __init__(self, tag, value, props = None):
+    super().__init__(tag, value, None, props)
+  
+  def to_html(self):
+    if self.value is None or self.value =="":
+      raise ValueError("This node must have a value")
+    elif self.tag is None:
+      return str(self.value)
+    else:
+      props_str =" " + self.props_to_html() if self.props_to_html() != "" else ""
+      return f"<{self.tag}{props_str}>{self.value}</{self.tag}>"
