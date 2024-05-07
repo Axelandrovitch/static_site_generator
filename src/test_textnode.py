@@ -1,6 +1,6 @@
 import unittest
+from textnode import TextNode, split_nodes_delimeter
 
-from textnode import TextNode
 
 
 class TestTextNode(unittest.TestCase):
@@ -48,6 +48,21 @@ class TestTextNode(unittest.TestCase):
         self.assertNotEqual(self.full_node, node_empty_url)
 
 
+class ConversionFunctions(unittest.TestCase):
 
-if __name__ == "__main__":
-    unittest.main()
+  def test_split_nodes_delimeter(self):
+    text_node_text = TextNode(text="Hello World")
+    text_node_bold= TextNode(text="**bold text** not bold")
+    text_node_italic = TextNode(text="not italic*italic text*")
+    text_node_code = TextNode(text="some other stuff `code text` not code")
+
+
+    text_node_1 = TextNode(text="Hello World", text_type="text")
+    text_node_2 = TextNode(text="**bold text** not bold", text_type="text")
+    text_node_3 = TextNode(text="not italic", text_type="text")
+    text_node_4 = TextNode(text="italic text", text_type="italic")
+    text_node_5 = TextNode(text="some other stuff `code text` not code", text_type="text")
+    expected_italic = [text_node_1, text_node_2, text_node_3, text_node_4, text_node_5]
+
+    test1 = split_nodes_delimeter([text_node_text, text_node_bold, text_node_italic, text_node_code], "*", "italic")
+    self.assertEqual(test1, expected_italic)
