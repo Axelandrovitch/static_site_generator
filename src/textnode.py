@@ -42,12 +42,12 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     return new_nodes
 
 
-text_node_1 = TextNode(text="Hello World", text_type="text")
-text_node_2 = TextNode(text="**this is why** *I never go* to this place !", text_type="text")
-text_node_3 = TextNode(text="it is such an idiotic thing *to do*", text_type="text")
-text_node_4 = TextNode(text="Whatever", text_type="text")
-text_node_5 = TextNode(text="I am going **home** to write some `code text`", text_type="text")
+# text_node_1 = TextNode(text="Hello World", text_type="text")
+# text_node_2 = TextNode(text="**this is why** *I never go* to this place !", text_type="text")
+# text_node_3 = TextNode(text="it is such an idiotic thing *to do*", text_type="text")
+# text_node_4 = TextNode(text="Whatever", text_type="text")
+# text_node_5 = TextNode(text="I am going **home** to write some `code text`", text_type="text")
 
-test = split_nodes_delimiter([text_node_1, text_node_2, text_node_3, text_node_4, text_node_5], "*", "italic")
-for node in test:
-    print(node)
+# test = split_nodes_delimiter([text_node_1, text_node_2, text_node_3, text_node_4, text_node_5], "*", "italic")
+# for node in test:
+#     print(node)
