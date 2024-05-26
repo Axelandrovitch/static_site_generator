@@ -1,7 +1,8 @@
 from textnode import TextNode
+from copystatic import copy_directory_contents
 
 def main():
-    test_node = TextNode('This is some text node test', 'italic', 'https://boot.dev')
 
-    print(test_node.__repr__())
+  copy_directory_contents(src="static", dst="public")
+
 main()

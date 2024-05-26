@@ -1,6 +1,6 @@
 import re
-import textnode
-from textnode import TextNode, split_nodes_delimiter, text_type_text, text_type_bold, text_type_italic, text_type_code, text_type_image, text_type_link
+from htmlnode import HTMLNode, LeafNode
+from textnode import TextNode, split_nodes_delimiter, text_type_text, text_type_bold, text_type_italic, text_type_code, text_type_image, text_type_link, text_node_to_html_node
 
 def extract_markdown_images(text):
     matches = re.findall(r"!\[(.*?)\]\((.*?)\)", text)
@@ -71,37 +71,148 @@ def text_to_text_nodes(text):
    processed_nodes = split_node_link(processed_nodes)
    return processed_nodes
    
+def markdown_to_blocks(markdown):
+    blocks = markdown.split("\n\n")
+    stripped_blocks = [block.strip() for block in blocks]
+    filtered_blocks = list(filter(lambda x: x != "", stripped_blocks))
+    return filtered_blocks
+
+def find_first_char(string):
+   first_char = 0
+   while string[first_char] == "\n":
+      first_char +=1
+   return string[first_char]
    
 
-# node = TextNode(
-#     "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and another ![second image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/3elNhQu.png)",
-#     "text",
-# )
+def count_consecutive(text, order = "normal"):
+   if order == "normal":
+      count = 0
+      while text[count] == text[count+1]:
+        count +=1
+      return count+1
+   if order == "reversed":
+      count = -1
+      while text[count] == text[count-1]:
+         count -=1
+      return abs(count)
 
-# new_nodes = split_node_image([node])
+def check_line_start(text, char, space_needed=False):
+   split_text = text.split("\n")
+   filtered = list(filter(lambda x: x!="", split_text))
 
-# print(new_nodes)
+   for subtext in filtered:
+      second_char = subtext[1] if len(subtext) > 1 else None
+      if space_needed is True:
+         if subtext[0] != char or second_char != " ":
+            return False
+      elif subtext[0] != char and space_needed is False:
+         return False
+   return True
+
+def check_ol(text):
+   split_text = text.split("\n")
+   filtered = list(filter(lambda x: x!="", split_text))
+   starting_lines = []
+   for subtext in filtered:
+      first_char = subtext[0]
+      second_char = subtext[1] if len(subtext) >= 2 else None
+      third_char = subtext[2] if len(subtext) >= 3 else None
+      starting_lines.append([first_char, second_char, third_char])
+   for i, line in enumerate(starting_lines):
+      if line[0] == str(i+1) and line[1] == "." and line[2] == " ":
+         continue
+      else:
+         return False
+   return True
 
 
-# node2 = TextNode(
-#     "This is text with an ![image1](https://example.com/image1.png) and another ![image2](https://example.com/image2.png) here.",
-#     text_type="text"
-# )
-# new_nodes2 = split_node_image([node2])
-# # print(new_nodes2)
-
-# node_links = TextNode(
-#     "Here is a [link1](https://example.com/link1) and here is another [link2](https://example.com/link2) and some more text.",
-#     text_type="text"
-# )
-# new_nodes_link = split_node_link([node])
-
-# print(new_nodes_link)
 
 
-test_text_to_nodes = "This is **text** with an *italic* word and a `code block` and an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and a [link](https://boot.dev)"
+def block_to_block_type(block):
+   block_type_heading = "heading"
+   block_type_paragraph = "paragraph"
+   block_type_code = "code"
+   block_type_quote = "quote"
+   block_type_ul = "unordered_list"
+   block_type_ol = "ordered_list"
+   first_char = find_first_char(block)
+   if first_char == "#" and count_consecutive(text=block) < 7 and block[count_consecutive(text=block)] == " ":
+      return block_type_heading
+   elif first_char == "`" and count_consecutive(text=block) == 3 and count_consecutive(text=block, order="reversed") == 3 and block[-1] == "`":
+      return block_type_code
+   elif first_char == ">" and check_line_start(block, char=">"):
+      return block_type_quote
+   elif (first_char == "*" or first_char == "-") and check_line_start(text=block, char = first_char, space_needed=True):
+      return block_type_ul
+   elif first_char == "1" and check_ol(block):
+      return block_type_ol
+   else:
+      return block_type_paragraph
 
-final = text_to_text_nodes(test_text_to_nodes)
 
-for node in final:
-   print(node)
+def block_to_html_node(block):
+    block_type = block_to_block_type(block)
+    content = block.strip()
+
+    if block_type.startswith("heading"):
+        return heading_to_html(content)
+    elif block_type == "paragraph":
+        paragraph_node = HTMLNode("p")
+        text_nodes = text_to_text_nodes(content)
+        html_children = [text_node_to_html_node(node) for node in text_nodes]
+        paragraph_node.children = html_children
+        return paragraph_node
+    elif block_type == "unordered_list":
+        list_items = content.split("\n")
+        list_node = HTMLNode("ul")
+        list_node.children = [HTMLNode("li", value=item[2:].strip()) for item in list_items]
+        return list_node
+    elif block_type == "ordered_list":
+        list_items = content.split("\n")
+        list_node = HTMLNode("ol")
+        list_node.children = [HTMLNode("li", value=item.split('.', 1)[1].strip()) for item in list_items]
+        return list_node
+    elif block_type == "code":
+        code_content = "\n".join(block.split("\n")[1:-1])
+        return HTMLNode("pre", children=[HTMLNode("code", value=code_content)])
+    elif block_type == "quote":
+        quote_content = "\n".join(line[1:].strip() for line in content.split("\n"))
+        return HTMLNode("blockquote", value=quote_content)
+
+
+def heading_to_html(heading):
+   n = 1
+   while heading[n-1] == "#":
+      n +=1
+    
+   final_heading = heading[n:].strip()
+   return HTMLNode(f"h{n-1}", value=final_heading)
+
+
+def markdown_to_html_node(markdown):
+    # Split the markdown into blocks
+    blocks = markdown_to_blocks(markdown)
+    
+    # Convert each block into an HTMLNode
+    html_nodes = [block_to_html_node(block) for block in blocks]
+    
+    # Create the top-level <div> node
+    div_node = HTMLNode("div", children=html_nodes)
+    
+    return div_node
+
+
+def extract_title(markdown):
+   blocks = markdown_to_blocks(markdown=markdown)
+   h1_count = 0
+   h1_to_rtrn = None
+   for block in blocks:
+      html_node = block_to_html_node(block=block)
+      if html_node.tag == "h1":
+         h1_to_rtrn = html_node
+         h1_count +=1
+   if h1_count == 1:
+      return h1_to_rtrn.text
+   else:
+      raise Exception("Must have one and only one h1")
+      
