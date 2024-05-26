@@ -2,11 +2,29 @@ class HTMLNode:
     def __init__(self, tag=None, value=None, children=None, props=None):
         self.tag = tag
         self.value = value
-        self.children = children
-        self.props = props
+        self.children = children or []
+        self.props = props or {}
 
     def to_html(self):
-            raise NotImplementedError("Invalid HTML Node")
+        # Start with the opening tag
+        if self.tag:
+            tag_open = f"<{self.tag}"
+            for prop, value in self.props.items():
+                tag_open += f' {prop}="{value}"'
+            tag_open += ">"
+        else:
+            tag_open = ""
+
+        # Add the content inside the tag (value and children)
+        content = self.value if self.value else ""
+        for child in self.children:
+            content += child.to_html()
+
+        # Closing tag
+        tag_close = f"</{self.tag}>" if self.tag else ""
+
+        return tag_open + content + tag_close
+
 
     def props_to_html(self):
         if self.props is None:
@@ -42,7 +60,7 @@ class LeafNode(HTMLNode):
         return self.tag == other.tag and self.value == other.value and self.props == other.props
 
     def to_html(self):
-        if self.value is None or self.value == "":
+        if self.value is None:
             raise ValueError("This node must have a value")
         elif self.tag is None:
             return str(self.value)
